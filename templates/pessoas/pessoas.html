@@ -20,7 +20,7 @@
 
     <!-- Formulário -->
     <div id="form-adicionar-cliente" class="adicionar-cliente mt-3 d-none">
-        <form action="{% url 'adicionar_pessoa' %}" method="POST">
+        <form action="{% url 'registrar_usuario' %}" method="POST">
             {% csrf_token %}
             <div class="form-group">
                 <label for="nome">Nome completo:</label>

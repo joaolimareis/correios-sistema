@@ -1,0 +1,9 @@
+
+{% block content %}
+<h2>Tem certeza que deseja deletar a encomenda {{ encomenda.codigo }}?</h2>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Sim, deletar</button>
+    <a href="{% url 'listar_encomendas' %}">Cancelar</a>
+</form>
+{% endblock %}

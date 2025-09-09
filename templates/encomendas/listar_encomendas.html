@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Lista de Encomendas{% endblock %}
+
+{% block dashboard %}
+<div class="container mt-4">
+    <h2>Encomendas</h2>
+    <a href="{% url 'criar_encomenda' %}" class="btn btn-primary mb-3">+ Nova Encomenda</a>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Destinatário</th>
+                <th>Status</th>
+                <th>Data Chegada</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for encomenda in encomendas %}
+            <tr>
+                <td>{{ encomenda.codigo }}</td>
+                <td>{{ encomenda.nome_destinatario }}</td>
+                <td>{{ encomenda.status }}</td>
+                <td>{{ encomenda.data_chegada|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <a href="{% url 'editar_encomenda' encomenda.id %}" class="btn btn-sm btn-warning">Editar</a>
+                    <a href="{% url 'deletar_encomenda' encomenda.id %}" class="btn btn-sm btn-danger">Excluir</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">Nenhuma encomenda cadastrada.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
