@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block dashboard %}
+<div class="container mt-4">
+    <h3>Editar Pessoa</h3>
+    <form action="{% url 'editar_pessoa' pessoa.id %}" method="POST">
+        {% csrf_token %}
+        <input type="text" class="form-control mb-2" name="nome" value="{{ pessoa.nome }}" placeholder="Nome completo">
+        <input type="email" class="form-control mb-2" name="email" value="{{ pessoa.email }}">
+        <input type="text" class="form-control mb-2" name="cpf" value="{{ pessoa.cpf }}">
+        <input type="password" class="form-control mb-2" name="senha" value="{{ pessoa.senha }}">
+        <select name="tipo_acesso" class="form-control mb-2">
+            {% for tipo, label in pessoa.TIPO_ACESSO_CHOICES %}
+                <option value="{{ tipo }}" {% if pessoa.tipo_acesso == tipo %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" class="btn-principal" value="Atualizar">
+    </form>
+</div>
+{% endblock %}

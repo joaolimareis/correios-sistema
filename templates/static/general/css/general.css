@@ -1,0 +1,7 @@
+:root {
+    --main-color: #003366;           /* Azul escuro principal */
+    --dark-color: #002244;           /* Azul mais escuro para detalhes */
+    --light-color: #ffcc00;          /* Amarelo dos Correios, destaque */
+    --contrast-color: #0066cc;       /* Azul claro para botões e links */
+    --differential-color: #f2f2f2;   /* Cinza claro para fundos e áreas neutras */
+}
