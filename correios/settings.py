@@ -30,6 +30,8 @@ INSTALLED_APPS = [
     'encomendas',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
+
 ]
 
 MIDDLEWARE = [
@@ -40,6 +42,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+
 ]
 
 ROOT_URLCONF = 'correios.urls'
@@ -125,5 +129,18 @@ LOGOUT_REDIRECT_URL = 'login'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',  
     )
 }
+APPEND_SLASH = False
+CORS_ALLOW_ALL_ORIGINS = True
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),  # antes era 5 min, agora 2h
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),      # refresh dura 7 dias
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+

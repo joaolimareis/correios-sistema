@@ -1,21 +1,61 @@
 {% extends "base.html" %}
-{% load static %}
+{% block title %}Editar Pessoa{% endblock %}
 
 {% block dashboard %}
 <div class="container mt-4">
-    <h3>Editar Pessoa</h3>
-    <form action="{% url 'editar_pessoa' pessoa.id %}" method="POST">
-        {% csrf_token %}
-        <input type="text" class="form-control mb-2" name="nome" value="{{ pessoa.nome }}" placeholder="Nome completo">
-        <input type="email" class="form-control mb-2" name="email" value="{{ pessoa.email }}">
-        <input type="text" class="form-control mb-2" name="cpf" value="{{ pessoa.cpf }}">
-        <input type="password" class="form-control mb-2" name="senha" value="{{ pessoa.senha }}">
-        <select name="tipo_acesso" class="form-control mb-2">
-            {% for tipo, label in pessoa.TIPO_ACESSO_CHOICES %}
-                <option value="{{ tipo }}" {% if pessoa.tipo_acesso == tipo %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-        <input type="submit" class="btn-principal" value="Atualizar">
-    </form>
+  <h3>Editar Pessoa</h3>
+  <form id="formEditar">
+    <input type="text" id="nome" class="form-control mb-2" placeholder="Nome completo">
+    <input type="email" id="email" class="form-control mb-2" placeholder="E-mail">
+    <input type="text" id="cpf" class="form-control mb-2" placeholder="CPF">
+    <input type="password" id="senha" class="form-control mb-2" placeholder="Nova senha (opcional)">
+    <select id="tipo_acesso" class="form-control mb-2">
+      <option value="SECRETARIA">Secretaria</option>
+      <option value="FUNCIONARIO">Funcionário</option>
+      <option value="ADMINISTRADOR">Administrador</option>
+    </select>
+    <button class="btn btn-success" type="submit">Salvar Alterações</button>
+  </form>
 </div>
+
+<script>
+const pessoaId = window.location.pathname.split("/").filter(Boolean).pop();
+
+async function carregarPessoa() {
+  try {
+    const resp = await axios.get("/pessoas/api/", {
+  headers: { "Authorization": "Bearer " + localStorage.getItem("access") }
+});
+
+    const pessoa = resp.data.find(p => p.id == pessoaId);
+    if (!pessoa) {
+      alert("Pessoa não encontrada");
+      window.location.href = "/pessoas/";
+      return;
+    }
+    document.getElementById("nome").value = pessoa.nome;
+    document.getElementById("email").value = pessoa.email;
+    document.getElementById("cpf").value = pessoa.cpf;
+    document.getElementById("tipo_acesso").value = pessoa.tipo_acesso;
+  } catch (err) {
+    alert("Erro ao carregar dados");
+  }
+}
+
+document.getElementById("formEditar").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  try {
+    await axios.put(`/pessoas/api/editar/${pessoaId}/`, dados, {
+  headers: { "Authorization": "Bearer " + localStorage.getItem("access") }
+});
+
+    alert("Pessoa atualizada!");
+    window.location.href = "/pessoas/";
+  } catch (err) {
+    alert("Erro ao salvar alterações");
+  }
+});
+
+carregarPessoa();
+</script>
 {% endblock %}

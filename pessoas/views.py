@@ -4,7 +4,14 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Pessoa
+from django.shortcuts import render, redirect
 
+
+def pagina_pessoas(request):
+    return render(request, "pessoas/pessoas.html")
+
+def pagina_editar_pessoa(request, pessoa_id):
+    return render(request, "pessoas/editar_pessoa.html", {"pessoa_id": pessoa_id})
 
 # 🔎 helper para checar se é admin ou superuser
 def is_admin(user):

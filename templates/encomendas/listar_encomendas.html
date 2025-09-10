@@ -5,11 +5,12 @@
 {% block dashboard %}
 <div class="container mt-4">
     <h2>Encomendas</h2>
-    <a href="{% url 'criar_encomenda' %}" class="btn btn-primary mb-3">+ Nova Encomenda</a>
+    <a href="/encomendas/criar/" class="btn btn-primary mb-3">+ Nova Encomenda</a>
 
     <table class="table table-bordered table-striped">
         <thead>
             <tr>
+                <th>ID</th>
                 <th>Código</th>
                 <th>Destinatário</th>
                 <th>Status</th>
@@ -17,24 +18,69 @@
                 <th>Ações</th>
             </tr>
         </thead>
-        <tbody>
-            {% for encomenda in encomendas %}
+        <tbody id="tabela-encomendas">
             <tr>
-                <td>{{ encomenda.codigo }}</td>
-                <td>{{ encomenda.nome_destinatario }}</td>
-                <td>{{ encomenda.status }}</td>
-                <td>{{ encomenda.data_chegada|date:"d/m/Y H:i" }}</td>
-                <td>
-                    <a href="{% url 'editar_encomenda' encomenda.id %}" class="btn btn-sm btn-warning">Editar</a>
-                    <a href="{% url 'deletar_encomenda' encomenda.id %}" class="btn btn-sm btn-danger">Excluir</a>
-                </td>
+                <td colspan="6" class="text-center">Carregando...</td>
             </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" class="text-center">Nenhuma encomenda cadastrada.</td>
-            </tr>
-            {% endfor %}
         </tbody>
     </table>
 </div>
+
+<!-- Axios -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+async function carregarEncomendas() {
+    const token = localStorage.getItem("access");
+    if (!token) {
+        alert("Você precisa fazer login novamente.");
+        window.location.href = "/login/";
+        return;
+    }
+
+    try {
+        const response = await axios.get("/encomendas/", {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        const encomendas = response.data;
+        const tbody = document.getElementById("tabela-encomendas");
+        tbody.innerHTML = "";
+
+        if (encomendas.length === 0) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="6" class="text-center">Nenhuma encomenda cadastrada.</td>
+              </tr>
+            `;
+        }
+
+        encomendas.forEach(e => {
+            tbody.innerHTML += `
+              <tr>
+                <td>${e.id}</td>
+                <td>${e.codigo}</td>
+                <td>${e.nome_destinatario || e.destinatario}</td>
+                <td>${e.status}</td>
+                <td>${e.data_chegada ? new Date(e.data_chegada).toLocaleString("pt-BR") : "-"}</td>
+                <td>
+                  <a href="/encomendas/editar/${e.id}/" class="btn btn-sm btn-warning">Editar</a>
+                  <a href="/encomendas/deletar/${e.id}/" class="btn btn-sm btn-danger">Excluir</a>
+                </td>
+              </tr>
+            `;
+        });
+
+    } catch (err) {
+        console.error(err);
+        alert("Erro ao carregar encomendas.");
+        if (err.response && err.response.status === 401) {
+            window.location.href = "/login/";
+        }
+    }
+}
+
+carregarEncomendas();
+</script>
 {% endblock %}

@@ -5,4 +5,4 @@ class EncomendaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Encomenda
         fields = "__all__"
-        
+        read_only_fields = ["cadastrado_por", "entregue_por", "data_chegada", "data_retirada"]
