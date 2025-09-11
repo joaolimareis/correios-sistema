@@ -1,0 +1,72 @@
+/* Container principal */
+.encomendas-container {
+  padding: 20px;
+}
+
+/* Título e botão principal */
+.encomendas-container h2 {
+  color: #005CA9;
+  font-weight: bold;
+}
+.encomendas-container .btn-success {
+  background-color: #005CA9;
+  border: none;
+}
+.encomendas-container .btn-success:hover {
+  background-color: #004080;
+}
+
+/* Card da lista */
+.encomendas-card {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+.encomendas-card .card-header {
+  background: #FFCC00;
+  color: #333;
+  font-weight: bold;
+}
+
+/* Tabela */
+.encomendas-table th {
+  background: #f9f9f9;
+  color: #333;
+}
+.encomendas-table td {
+  vertical-align: middle;
+}
+.encomendas-table img {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 2px;
+}
+
+/* Botões */
+.encomendas-container .btn-warning {
+  background-color: #FFCC00;
+  border: none;
+  color: #333;
+}
+.encomendas-container .btn-warning:hover {
+  background-color: #e6b800;
+  color: #000;
+}
+.encomendas-container .btn-danger {
+  background-color: #d9534f;
+  border: none;
+}
+.encomendas-container .btn-danger:hover {
+  background-color: #c9302c;
+}
+
+/* Modais */
+.modal-content {
+  border-radius: 10px;
+  border: none;
+}
+.modal-header {
+  border-bottom: none;
+}
+.modal-footer {
+  border-top: none;
+}

@@ -1,10 +1,14 @@
+/* Layout base */
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  background-color: #F4F4F4; /* fundo claro */
+  color: #333333; /* texto escuro */
 }
 
+/* Logo */
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -12,12 +16,13 @@
   transition: filter 300ms;
 }
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em #005CA9aa); /* azul Correios */
 }
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  filter: drop-shadow(0 0 2em #FFCC00aa); /* amarelo Correios */
 }
 
+/* Animação */
 @keyframes logo-spin {
   from {
     transform: rotate(0deg);
@@ -33,10 +38,49 @@
   }
 }
 
+/* Cards */
 .card {
   padding: 2em;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-top: 4px solid #005CA9; /* destaque azul Correios */
 }
 
+/* Links */
+a {
+  color: #005CA9;
+  text-decoration: none;
+}
+a:hover {
+  color: #FFCC00;
+}
+
+/* Botões */
+button, .btn {
+  background-color: #005CA9;
+  border: none;
+  color: white;
+  padding: 0.6em 1.2em;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover, .btn:hover {
+  background-color: #004080; /* azul mais escuro */
+}
+
+button.btn-warning, .btn-warning {
+  background-color: #FFCC00;
+  color: #333;
+}
+button.btn-warning:hover, .btn-warning:hover {
+  background-color: #e6b800;
+}
+
+/* Texto secundário */
 .read-the-docs {
-  color: #888;
+  color: #666;
 }

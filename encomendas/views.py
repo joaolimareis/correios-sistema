@@ -7,6 +7,40 @@ from django.utils import timezone
 from .serializers import EncomendaSerializer
 from .permissions import IsFuncionario, IsSecretaria, IsAdmin
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.utils.dateparse import parse_datetime
+from django.db.models import Q
+from datetime import datetime, timedelta
+
+from datetime import datetime, timedelta
+from django.utils.dateparse import parse_datetime
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def filtrar_encomendas(request):
+    nome = request.GET.get("nome")
+    status = request.GET.get("status")
+    data_inicial = request.GET.get("data_inicial")
+    data_final = request.GET.get("data_final")
+
+    qs = Encomenda.objects.all()
+
+    if nome:
+        qs = qs.filter(nome_destinatario__icontains=nome)
+    if status:
+        qs = qs.filter(status=status)
+
+    if data_inicial:
+        # transforma yyyy-mm-dd em datetime no início do dia
+        di = datetime.strptime(data_inicial, "%Y-%m-%d")
+        qs = qs.filter(data_chegada__gte=di)
+
+    if data_final:
+        # transforma yyyy-mm-dd em datetime no fim do dia
+        df = datetime.strptime(data_final, "%Y-%m-%d") + timedelta(days=1) - timedelta(seconds=1)
+        qs = qs.filter(data_chegada__lte=df)
+
+    serializer = EncomendaSerializer(qs, many=True)
+    return Response(serializer.data)
 
 
 # 📌 Listar encomendas - qualquer usuário logado pode ver
@@ -21,7 +55,7 @@ def listar_encomendas(request):
 # 📌 Criar encomenda - Secretaria, Funcionário ou Admin
 @api_view(['POST'])
 @permission_classes([IsSecretaria | IsFuncionario | IsAdmin])
-@parser_classes([MultiPartParser, FormParser])   # ✅ agora funciona
+@parser_classes([MultiPartParser, FormParser])
 def criar_encomenda(request):
     serializer = EncomendaSerializer(data=request.data)
     if serializer.is_valid():
@@ -30,13 +64,15 @@ def criar_encomenda(request):
             status="RECEBIDO"
         )
         return Response({"msg": "Encomenda cadastrada com sucesso!", "id": encomenda.id}, status=201)
+    print(serializer.errors)  # 🔥 mostra no console o motivo do 400
     return Response(serializer.errors, status=400)
+
 
 
 # 📌 Editar encomenda - Secretaria ou Admin
 @api_view(['PUT'])
 @permission_classes([IsSecretaria | IsAdmin])
-@parser_classes([MultiPartParser, FormParser])   # 👈 necessário para aceitar upload
+@parser_classes([MultiPartParser, FormParser])   
 def editar_encomenda(request, pk):
     encomenda = get_object_or_404(Encomenda, pk=pk)
 
@@ -60,7 +96,6 @@ def editar_encomenda(request, pk):
     return Response(serializer.errors, status=400)
 
 
-
 # 📌 Deletar encomenda - Secretaria ou Admin
 @api_view(['DELETE'])
 @permission_classes([IsSecretaria | IsAdmin])
@@ -70,26 +105,33 @@ def deletar_encomenda(request, pk):
     return Response({"msg": "Encomenda deletada com sucesso!"})
 
 
-# 📌 Buscar encomendas pelo nome do destinatário
+
+# 📌 Buscar encomendas pelo nome, código ou status
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def buscar_encomenda(request):
-    nome = request.GET.get("nome")
-    if not nome:
-        return Response({"detail": "Informe o nome do destinatário"}, status=400)
+    termo = request.GET.get("nome", "").strip()
 
-    encomendas = Encomenda.objects.filter(
-        nome_destinatario__icontains=nome
-    ).exclude(status="ENTREGUE")
+    if not termo:
+        # Retorna as 4 mais recentes
+        encomendas = Encomenda.objects.all().order_by("-id")[:4]
+    else:
+        # Busca por nome, código ou status
+        encomendas = Encomenda.objects.filter(
+            Q(nome_destinatario__icontains=termo) |
+            Q(codigo__icontains=termo) |
+            Q(status__icontains=termo)
+        )
 
     serializer = EncomendaSerializer(encomendas, many=True)
     return Response(serializer.data)
 
 
+
 # 📌 Entregar encomenda - Secretaria ou Admin
 @api_view(['PUT'])
 @permission_classes([IsSecretaria | IsAdmin])
-@parser_classes([MultiPartParser, FormParser])   # ✅ também precisa, pois tem upload
+@parser_classes([MultiPartParser, FormParser])   
 def entregar_encomenda(request, pk):
     encomenda = get_object_or_404(Encomenda, pk=pk)
 

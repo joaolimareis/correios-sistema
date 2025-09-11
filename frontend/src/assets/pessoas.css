@@ -1,0 +1,55 @@
+/* Container principal */
+.pessoas-container {
+  padding: 20px;
+}
+
+/* Título e botão principal */
+.pessoas-container h2 {
+  color: #005CA9;
+  font-weight: bold;
+}
+.pessoas-container .btn-success {
+  background-color: #005CA9;
+  border: none;
+}
+.pessoas-container .btn-success:hover {
+  background-color: #004080;
+}
+
+/* Card da lista */
+.pessoas-card {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+.pessoas-card .card-header {
+  background: #FFCC00;
+  color: #333;
+  font-weight: bold;
+}
+
+/* Tabela */
+.pessoas-table th {
+  background: #f9f9f9;
+  color: #333;
+}
+.pessoas-table td {
+  vertical-align: middle;
+}
+
+/* Botões */
+.pessoas-container .btn-warning {
+  background-color: #FFCC00;
+  border: none;
+  color: #333;
+}
+.pessoas-container .btn-warning:hover {
+  background-color: #e6b800;
+  color: #000;
+}
+.pessoas-container .btn-danger {
+  background-color: #d9534f;
+  border: none;
+}
+.pessoas-container .btn-danger:hover {
+  background-color: #c9302c;
+}

@@ -1,49 +1,145 @@
-/* Sidebar */
+/* ============================= */
+/* Sidebar                       */
+/* ============================= */
 .sidebar {
   width: 220px;
   min-height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
-  padding-top: 20px;
+  background: #005CA9; /* Azul Correios */
+  color: white;
+  transition: transform 0.3s ease;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
 }
 
+.sidebar.closed {
+  transform: translateX(-100%);
+}
+
+/* ============================= */
+/* Logo                          */
+/* ============================= */
 .sidebar .logo-details {
   text-align: center;
-  font-size: 1.2rem;
-  margin-bottom: 30px;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  background: #005CA9; /* Azul mais escuro para contraste */
 }
 
+.sidebar .logo-img {
+  max-width: 120px;
+  height: auto;
+}
+
+/* ============================= */
+/* Links da Sidebar              */
+/* ============================= */
 .sidebar .nav-list {
   list-style: none;
-  padding: 0;
+  padding: 15px;
+  margin: 0;
+  flex-grow: 1; /* ocupa espaço até o logout */
 }
 
 .sidebar .nav-list li {
-  margin: 10px 0;
+  margin: 6px 0;
 }
 
 .sidebar .nav-list a,
 .sidebar .nav-list button {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 15px;
+  gap: 10px;
+  padding: 10px 14px;
   text-decoration: none;
   border: none;
   background: none;
   cursor: pointer;
   width: 100%;
   text-align: left;
+  font-weight: 500;
+  color: white;
+  transition: all 0.3s ease;
+  border-radius: 6px;
 }
 
 .sidebar .nav-list a:hover,
 .sidebar .nav-list button:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  background: #FFCC00; /* Amarelo Correios */
+  color: #333; /* Texto escuro para contraste */
 }
 
-/* Conteúdo principal com espaço para sidebar */
+/* ============================= */
+/* Logout sempre embaixo          */
+/* ============================= */
+/* Logout sempre embaixo */
+.logout-section {
+  padding: 0; /* zera padding externo */
+  margin-top: auto; /* joga para o final da sidebar */
+}
+
+.logout-section .nav-link {
+  width: 100%;
+  padding: 12px 15px;
+  background: transparent;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  border: none;
+  border-radius: 0;
+  text-align: left;
+  transition: all 0.3s ease;
+}
+
+.logout-section .nav-link:hover {
+  background: #dc3545; /* Vermelho forte */
+  color: #fff;
+}
+
+
+/* ============================= */
+/* Conteúdo Principal             */
+/* ============================= */
 .main-content {
   margin-left: 220px;
+  transition: margin-left 0.3s ease;
+  background: #F4F4F4; /* Fundo claro */
+  min-height: 100vh;
+}
+
+.sidebar.closed ~ .main-content {
+  margin-left: 0;
+}
+
+/* ============================= */
+/* Navbar Topo                   */
+/* ============================= */
+.navbar {
+  background-color: white !important;
+  border-bottom: 4px solid #005CA9; /* Azul Correios */
+}
+
+.navbar .navbar-brand {
+  font-weight: bold;
+  color: #005CA9; /* Azul título */
+}
+
+/* ============================= */
+/* Botão Hambúrguer              */
+/* ============================= */
+.navbar .btn {
+  border-radius: 6px;
+  border: 1px solid #005CA9;
+  color: #005CA9;
+  transition: all 0.3s ease;
+}
+
+.navbar .btn:hover {
+  background: #005CA9;
+  color: white;
 }

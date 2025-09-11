@@ -1,65 +1,71 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import "../assets/layout.css"; // vamos criar esse CSS
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import "../assets/layout.css"; 
 
 function Layout({ children }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // 🚨 Se não tiver token, redireciona para login
   useEffect(() => {
     if (!localStorage.getItem("access")) {
       navigate("/login");
     }
   }, [navigate]);
 
-  // 🚪 Logout
   const handleLogout = () => {
     localStorage.clear();
     navigate("/login");
   };
 
+  if (location.pathname === "/login") {
+    return <>{children}</>;
+  }
+
   return (
     <div className="d-flex">
       {/* Sidebar */}
-      <div className="sidebar bg-dark text-white">
+      <div className={`sidebar ${sidebarOpen ? "open" : "closed"}`}>
         <div className="logo-details">
-          <span className="logo_name">Correios FAAMA</span>
+          <img src="/Group.png" alt="Logo Correios" className="logo-img" />
         </div>
-        <ul className="nav-list">
+
+        <ul className="nav-list flex-grow-1">
           <li>
-            <Link to="/" className="nav-link text-white">
+            <Link to="/" className="nav-link">
               <i className="bx bx-home"></i> Início
             </Link>
           </li>
           <li>
-            <Link to="/pessoas" className="nav-link text-white">
+            <Link to="/pessoas" className="nav-link">
               <i className="bx bx-user"></i> Pessoas
             </Link>
           </li>
           <li>
-            <Link to="/encomendas" className="nav-link text-white">
+            <Link to="/encomendas" className="nav-link">
               <i className="bx bx-package"></i> Encomendas
             </Link>
           </li>
-          <li>
-            <Link to="/buscar" className="nav-link text-white">
-                <i className="bx bx-search"></i> Buscar/Entregar
-            </Link>
-            </li>
-
-          <li>
-            <button onClick={handleLogout} className="btn btn-link nav-link text-white">
-              <i className="bx bx-log-out"></i> Sair
-            </button>
-          </li>
         </ul>
+
+        {/* Botão de logout fixado embaixo */}
+        <div className="logout-section">
+          <button onClick={handleLogout} className="btn btn-link nav-link">
+            <i className="bx bx-log-out"></i> Sair
+          </button>
+        </div>
       </div>
 
       {/* Conteúdo principal */}
       <div className="main-content flex-grow-1">
-        {/* Header fixo */}
-        <nav className="navbar navbar-light bg-light shadow-sm px-3">
-          <span className="navbar-brand">Painel</span>
+        <nav className="navbar navbar-light bg-light shadow-sm px-3 d-flex align-items-center justify-content-between">
+          <button
+            className="btn btn-outline-primary"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            ☰
+          </button>
+          <span className="navbar-brand mb-0 h1">Correios FAAMA</span>
         </nav>
 
         <div className="p-4">{children}</div>
