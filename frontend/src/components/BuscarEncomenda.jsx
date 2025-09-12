@@ -8,6 +8,7 @@ function BuscarEncomenda() {
   const [resultados, setResultados] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fotoCapturada, setFotoCapturada] = useState({});
+  const [expandirEntrega, setExpandirEntrega] = useState({}); // controla expansão por encomenda
 
   const videoRef = useRef({});
   const canvasRef = useRef({});
@@ -108,6 +109,7 @@ function BuscarEncomenda() {
     setFotoCapturada((prev) => ({ ...prev, [id]: file }));
     toast.success("✅ Arquivo anexado! Agora clique em 'Marcar como Entregue'.");
   };
+
   return (
     <div>
       {/* Header */}
@@ -163,15 +165,24 @@ function BuscarEncomenda() {
                   </span>
                 </p>
 
+                {/* Data de chegada */}
                 <p className="small mb-1">
                   <strong>Data de Chegada:</strong>{" "}
-                  {new Date(e.data_chegada).toLocaleString("pt-BR")}
+                  {new Date(e.data_chegada).toLocaleString("pt-BR")}{" "}
+                  {!e.foto_encomenda_recebida && (
+                    <span className="text-danger">(⚠️ foto removida)</span>
+                  )}
                 </p>
+
+                {/* Data de retirada */}
                 <p className="small mb-3">
                   <strong>Data de Retirada:</strong>{" "}
                   {e.data_retirada
                     ? new Date(e.data_retirada).toLocaleString("pt-BR")
-                    : "Ainda não retirada"}
+                    : "Ainda não retirada"}{" "}
+                  {e.data_retirada && !e.foto_encomenda_entregue && (
+                    <span className="text-danger">(⚠️ foto removida)</span>
+                  )}
                 </p>
 
                 {/* Foto recebida */}
@@ -200,71 +211,96 @@ function BuscarEncomenda() {
                   </div>
                 )}
 
-                {/* Webcam e upload só se não entregue */}
+                {/* Confirmar entrega - bloco recolhido/expandido */}
                 {e.status !== "ENTREGUE" && (
-                  <>
-                    <label className="form-label small fw-bold">
-                      Confirmar entrega:
-                    </label>
-                    <div className="mb-2 text-center">
-                      <video
-                        ref={(el) => (videoRef.current[e.id] = el)}
-                        autoPlay
-                        playsInline
-                        className="rounded border"
-                        style={{ width: "100%", maxHeight: "180px" }}
-                      />
-                      <canvas
-                        ref={(el) => (canvasRef.current[e.id] = el)}
-                        style={{ display: "none" }}
-                      />
-                    </div>
-
-                    <div className="d-grid gap-2">
+                  <div className="mt-3">
+                    {!expandirEntrega[e.id] ? (
                       <button
-                        className="btn btn-outline-secondary"
-                        type="button"
-                        onClick={() => startCamera(e.id)}
+                        className="btn btn-outline-primary w-100"
+                        onClick={() =>
+                          setExpandirEntrega((prev) => ({ ...prev, [e.id]: true }))
+                        }
                       >
-                        🎥 Abrir Câmera
+                        📦 Confirmar Entrega
                       </button>
-                      <button
-                        className="btn btn-outline-danger"
-                        type="button"
-                        onClick={() => stopCamera(e.id)}
-                      >
-                        ❌ Fechar Câmera
-                      </button>
+                    ) : (
+                      <>
+                        <div className="card p-2 border bg-light">
+                          <label className="form-label small fw-bold">
+                            Confirmar entrega:
+                          </label>
 
-                      <label className="btn btn-outline-dark">
-                        📂 Anexar Arquivo
-                        <input
-                          type="file"
-                          accept="image/*"
-                          hidden
-                          onChange={(event) =>
-                            handleFileSelect(e.id, event.target.files[0])
+                          <div className="mb-2 text-center">
+                            <video
+                              ref={(el) => (videoRef.current[e.id] = el)}
+                              autoPlay
+                              playsInline
+                              className="rounded border"
+                              style={{ width: "100%", maxHeight: "180px" }}
+                            />
+                            <canvas
+                              ref={(el) => (canvasRef.current[e.id] = el)}
+                              style={{ display: "none" }}
+                            />
+                          </div>
+
+                          <div className="d-grid gap-2">
+                            <button
+                              className="btn btn-outline-secondary"
+                              type="button"
+                              onClick={() => startCamera(e.id)}
+                            >
+                              🎥 Abrir Câmera
+                            </button>
+                            <button
+                              className="btn btn-outline-danger"
+                              type="button"
+                              onClick={() => stopCamera(e.id)}
+                            >
+                              ❌ Fechar Câmera
+                            </button>
+
+                            <label className="btn btn-outline-dark">
+                              📂 Anexar Arquivo
+                              <input
+                                type="file"
+                                accept="image/*"
+                                hidden
+                                onChange={(event) =>
+                                  handleFileSelect(e.id, event.target.files[0])
+                                }
+                              />
+                            </label>
+
+                            <button
+                              className="btn btn-warning"
+                              type="button"
+                              onClick={() => capturePhoto(e.id)}
+                            >
+                              📸 Capturar Foto
+                            </button>
+
+                            <button
+                              className="btn btn-success"
+                              type="button"
+                              onClick={() => deliverPackage(e.id)}
+                            >
+                              ✅ Marcar como Entregue
+                            </button>
+                          </div>
+                        </div>
+
+                        <button
+                          className="btn btn-sm btn-link mt-2"
+                          onClick={() =>
+                            setExpandirEntrega((prev) => ({ ...prev, [e.id]: false }))
                           }
-                        />
-                      </label>
-
-                      <button
-                        className="btn btn-warning"
-                        type="button"
-                        onClick={() => capturePhoto(e.id)}
-                      >
-                        📸 Capturar Foto
-                      </button>
-
-                      <button
-                        className="btn btn-primary"
-                        type="button"
-                        onClick={() => deliverPackage(e.id)}
-                      >
-                        ✅ Marcar como Entregue
-                      </button>
-                    </div>
-                  </>
+                        >
+                          🔽 Fechar opções
+                        </button>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

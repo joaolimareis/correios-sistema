@@ -13,4 +13,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Interceptor de resposta: trata token expirado
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Remove tokens salvos
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
+
+      // Redireciona para login
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

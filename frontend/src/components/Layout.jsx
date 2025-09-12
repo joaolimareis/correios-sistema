@@ -7,6 +7,14 @@ function Layout({ children }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // pega usuário do localStorage
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const groups = user.groups || [];
+
+  const isAdmin = user.is_superuser || groups.includes("ADMINISTRADOR");
+  const isSecretaria = groups.includes("SECRETARIA");
+  const isFuncionario = groups.includes("FUNCIONARIO");
+
   useEffect(() => {
     if (!localStorage.getItem("access")) {
       navigate("/login");
@@ -18,6 +26,7 @@ function Layout({ children }) {
     navigate("/login");
   };
 
+  // não renderiza layout na tela de login
   if (location.pathname === "/login") {
     return <>{children}</>;
   }
@@ -31,21 +40,30 @@ function Layout({ children }) {
         </div>
 
         <ul className="nav-list flex-grow-1">
+          {/* Início → todos os logados */}
           <li>
             <Link to="/" className="nav-link">
               <i className="bx bx-home"></i> Início
             </Link>
           </li>
-          <li>
-            <Link to="/pessoas" className="nav-link">
-              <i className="bx bx-user"></i> Pessoas
-            </Link>
-          </li>
-          <li>
-            <Link to="/encomendas" className="nav-link">
-              <i className="bx bx-package"></i> Encomendas
-            </Link>
-          </li>
+
+          {/* Pessoas → somente admin */}
+          {isAdmin && (
+            <li>
+              <Link to="/pessoas" className="nav-link">
+                <i className="bx bx-user"></i> Pessoas
+              </Link>
+            </li>
+          )}
+
+          {/* Encomendas → admin e secretaria */}
+          {(isAdmin || isSecretaria) && (
+            <li>
+              <Link to="/encomendas" className="nav-link">
+                <i className="bx bx-package"></i> Encomendas
+              </Link>
+            </li>
+          )}
         </ul>
 
         {/* Botão de logout fixado embaixo */}
@@ -57,7 +75,7 @@ function Layout({ children }) {
       </div>
 
       {/* Conteúdo principal */}
-      <div className="main-content flex-grow-1">
+      <div className="main-content flex-grow-1 d-flex flex-column">
         <nav className="navbar navbar-light bg-light shadow-sm px-3 d-flex align-items-center justify-content-between">
           <button
             className="btn btn-outline-primary"
@@ -68,7 +86,13 @@ function Layout({ children }) {
           <span className="navbar-brand mb-0 h1">Correios FAAMA</span>
         </nav>
 
-        <div className="p-4">{children}</div>
+        {/* Conteúdo das páginas */}
+        <div className="p-4 flex-grow-1">{children}</div>
+
+        {/* Rodapé */}
+        <footer className="footer-custom">
+          <small>Desenvolvido por Núcleo de Professores FAAMA</small>
+        </footer>
       </div>
     </div>
   );

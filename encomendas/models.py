@@ -11,7 +11,7 @@ class Encomenda(models.Model):
     nome_destinatario = models.CharField(max_length=255)
     codigo = models.CharField(max_length=50, unique=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDENTE')
-    data_chegada = models.DateTimeField(auto_now_add=True)  # preenchido na criação
+    data_chegada = models.DateTimeField(auto_now_add=True)
     data_retirada = models.DateTimeField(null=True, blank=True)
 
     foto_encomenda_recebida = models.ImageField(
@@ -23,6 +23,12 @@ class Encomenda(models.Model):
         upload_to="encomendas/entregues/", 
         null=True, 
         blank=True
+    )
+
+    observacao = models.TextField(
+        null=True, 
+        blank=True,
+        help_text="Observações sobre a encomenda (ex: condições, detalhes da entrega)"
     )
 
     cadastrado_por = models.ForeignKey(

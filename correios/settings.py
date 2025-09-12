@@ -137,7 +137,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),  # antes era 5 min, agora 2h
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),  # antes era 5 min, agora 2h
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),      # refresh dura 7 dias
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,

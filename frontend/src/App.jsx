@@ -3,25 +3,47 @@ import LoginPage from "./pages/LoginPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import PessoasPage from "./pages/PessoasPage.jsx";
 import EncomendasPage from "./pages/EncomendasPage.jsx";
-
+import PrivateRoute from "./components/PrivateRoute.jsx";
 
 function App() {
-  const isAuthenticated = !!localStorage.getItem("access");
-
   return (
     <BrowserRouter>
       <Routes>
+        {/* Login */}
         <Route path="/login" element={<LoginPage />} />
-        {isAuthenticated ? (
-          <>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/pessoas" element={<PessoasPage />} />
-            <Route path="/encomendas" element={<EncomendasPage />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </>
-        ) : (
-          <Route path="*" element={<Navigate to="/login" />} />
-        )}
+
+        {/* Home → qualquer logado */}
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <HomePage />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Pessoas → somente Admin */}
+        <Route
+          path="/pessoas"
+          element={
+            <PrivateRoute roles={["ADMINISTRADOR"]}>
+              <PessoasPage />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Encomendas → Admin e Secretaria */}
+        <Route
+          path="/encomendas"
+          element={
+            <PrivateRoute roles={["ADMINISTRADOR", "SECRETARIA"]}>
+              <EncomendasPage />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Rota inválida */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
   );

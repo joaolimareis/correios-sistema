@@ -10,12 +10,21 @@ function EncomendasPage() {
   const [form, setForm] = useState({
     nome_destinatario: "",
     codigo: "",
+    observacao: "",
     foto_encomenda_recebida: null,
   });
+  const [previewRecebidaCadastro, setPreviewRecebidaCadastro] = useState(null);
+
   const [editando, setEditando] = useState(null);
   const [formEdit, setFormEdit] = useState({});
+  const [previewRecebidaEdit, setPreviewRecebidaEdit] = useState(null);
+  const [previewEntregueEdit, setPreviewEntregueEdit] = useState(null);
+
   const [showCadastro, setShowCadastro] = useState(false);
   const [excluindo, setExcluindo] = useState(null);
+
+  // Modal global de imagens
+  const [imagemModal, setImagemModal] = useState(null);
 
   // 🔄 Carregar encomendas
   const carregarEncomendas = () => {
@@ -32,13 +41,18 @@ function EncomendasPage() {
   // ➕ Criar encomenda
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!form.foto_encomenda_recebida) {
+      toast.warning("⚠️ Para cadastrar uma encomenda é necessário enviar a foto recebida!");
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append("nome_destinatario", form.nome_destinatario);
       formData.append("codigo", form.codigo);
-      if (form.foto_encomenda_recebida) {
-        formData.append("foto_encomenda_recebida", form.foto_encomenda_recebida);
-      }
+      formData.append("observacao", form.observacao || "");
+      formData.append("foto_encomenda_recebida", form.foto_encomenda_recebida);
 
       await api.post("/encomendas/criar/", formData, {
         headers: {
@@ -47,7 +61,8 @@ function EncomendasPage() {
       });
 
       toast.success("📦 Encomenda cadastrada!");
-      setForm({ nome_destinatario: "", codigo: "", foto_encomenda_recebida: null });
+      setForm({ nome_destinatario: "", codigo: "", observacao: "", foto_encomenda_recebida: null });
+      setPreviewRecebidaCadastro(null);
       setShowCadastro(false);
       carregarEncomendas();
     } catch (err) {
@@ -89,6 +104,7 @@ function EncomendasPage() {
                   <th>Destinatário</th>
                   <th>Código</th>
                   <th>Status</th>
+                  <th>Observação</th>
                   <th>Foto Recebida</th>
                   <th>Foto Entregue</th>
                   <th>Ações</th>
@@ -100,6 +116,7 @@ function EncomendasPage() {
                     <td>{e.nome_destinatario}</td>
                     <td>{e.codigo}</td>
                     <td>{e.status}</td>
+                    <td>{e.observacao || "-"}</td>
                     <td>
                       {e.foto_encomenda_recebida && (
                         <img
@@ -107,6 +124,10 @@ function EncomendasPage() {
                           alt="Recebida"
                           width="80"
                           className="encomendas-img"
+                          style={{ cursor: "pointer" }}
+                          onClick={() =>
+                            setImagemModal(`http://localhost:8000${e.foto_encomenda_recebida}`)
+                          }
                         />
                       )}
                     </td>
@@ -117,6 +138,10 @@ function EncomendasPage() {
                           alt="Entregue"
                           width="80"
                           className="encomendas-img"
+                          style={{ cursor: "pointer" }}
+                          onClick={() =>
+                            setImagemModal(`http://localhost:8000${e.foto_encomenda_entregue}`)
+                          }
                         />
                       )}
                     </td>
@@ -126,6 +151,16 @@ function EncomendasPage() {
                         onClick={() => {
                           setEditando(e.id);
                           setFormEdit({ ...e });
+                          setPreviewRecebidaEdit(
+                            e.foto_encomenda_recebida
+                              ? `http://localhost:8000${e.foto_encomenda_recebida}`
+                              : null
+                          );
+                          setPreviewEntregueEdit(
+                            e.foto_encomenda_entregue
+                              ? `http://localhost:8000${e.foto_encomenda_entregue}`
+                              : null
+                          );
                         }}
                       >
                         ✏️ Editar
@@ -182,30 +217,41 @@ function EncomendasPage() {
                         />
                       </div>
                       <div className="col-md-12 mb-3">
+                        <label>Observação</label>
+                        <textarea
+                          className="form-control"
+                          value={form.observacao || ""}
+                          onChange={(e) => setForm({ ...form, observacao: e.target.value })}
+                          rows="3"
+                        ></textarea>
+                      </div>
+                      <div className="col-md-12 mb-3">
                         <label className="fw-bold">Foto Recebida</label>
-
-                        {/* Upload manual */}
                         <input
                           type="file"
                           className="form-control mb-2"
                           accept="image/*"
-                          onChange={(e) =>
-                            setForm({
-                              ...form,
-                              foto_encomenda_recebida: e.target.files[0],
-                            })
-                          }
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            setForm({ ...form, foto_encomenda_recebida: file });
+                            setPreviewRecebidaCadastro(URL.createObjectURL(file));
+                          }}
                         />
-
-                        {/* Captura pela câmera */}
                         <CameraCapture
-                          onCapture={(file) =>
-                            setForm({
-                              ...form,
-                              foto_encomenda_recebida: file,
-                            })
-                          }
+                          onCapture={(file) => {
+                            setForm({ ...form, foto_encomenda_recebida: file });
+                            setPreviewRecebidaCadastro(URL.createObjectURL(file));
+                          }}
                         />
+                        {previewRecebidaCadastro && (
+                          <img
+                            src={previewRecebidaCadastro}
+                            alt="Pré-visualização"
+                            className="img-thumbnail mt-2"
+                            style={{ width: "120px", cursor: "pointer" }}
+                            onClick={() => setImagemModal(previewRecebidaCadastro)}
+                          />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -275,13 +321,21 @@ function EncomendasPage() {
                   onSubmit={async (e) => {
                     e.preventDefault();
 
-                    // 🚨 Regra de validação
+                    if (
+                      formEdit.status === "RECEBIDO" &&
+                      !formEdit.foto_encomenda_recebida &&
+                      !formEdit.remove_foto_encomenda_recebida
+                    ) {
+                      toast.warning("⚠️ Para salvar como RECEBIDO é necessário enviar a foto de recebimento!");
+                      return;
+                    }
+
                     if (
                       formEdit.status === "ENTREGUE" &&
-                      !formEdit.foto_encomenda_recebida &&
-                      !formEdit.foto_encomenda_entregue
+                      !formEdit.foto_encomenda_entregue &&
+                      !formEdit.remove_foto_encomenda_entregue
                     ) {
-                      toast.warning("⚠️ Para marcar como ENTREGUE é necessário ter uma foto!");
+                      toast.warning("⚠️ Para salvar como ENTREGUE é necessário enviar a foto de entrega!");
                       return;
                     }
 
@@ -290,12 +344,26 @@ function EncomendasPage() {
                       formData.append("nome_destinatario", formEdit.nome_destinatario);
                       formData.append("codigo", formEdit.codigo);
                       formData.append("status", formEdit.status);
+                      formData.append("observacao", formEdit.observacao || "");
 
                       if (formEdit.foto_encomenda_recebida instanceof File) {
                         formData.append(
                           "foto_encomenda_recebida",
                           formEdit.foto_encomenda_recebida
                         );
+                      }
+                      if (formEdit.foto_encomenda_entregue instanceof File) {
+                        formData.append(
+                          "foto_encomenda_entregue",
+                          formEdit.foto_encomenda_entregue
+                        );
+                      }
+
+                      if (formEdit.remove_foto_encomenda_recebida) {
+                        formData.append("remove_foto_encomenda_recebida", "true");
+                      }
+                      if (formEdit.remove_foto_encomenda_entregue) {
+                        formData.append("remove_foto_encomenda_entregue", "true");
                       }
 
                       await api.put(`/encomendas/editar/${editando}/`, formData, {
@@ -310,10 +378,13 @@ function EncomendasPage() {
                       carregarEncomendas();
                     } catch (err) {
                       console.error("Erro ao editar:", err.response?.data);
-                      toast.error("Erro ao editar encomenda!");
+                      if (err.response?.data?.erro) {
+                        toast.warning(err.response.data.erro);
+                      } else {
+                        toast.error("Erro ao editar encomenda!");
+                      }
                     }
                   }}
-
                 >
                   <div className="modal-body">
                     <div className="row">
@@ -341,7 +412,6 @@ function EncomendasPage() {
                         />
                       </div>
 
-                      {/* 🔥 Novo campo status */}
                       <div className="col-md-6 mb-3">
                         <label>Status</label>
                         <select
@@ -353,32 +423,110 @@ function EncomendasPage() {
                           <option value="">Selecione...</option>
                           <option value="RECEBIDO">📦 Recebido</option>
                           <option value="ENTREGUE">✅ Entregue</option>
-
                         </select>
                       </div>
 
-                      {/* Upload + câmera */}
                       <div className="col-md-12 mb-3">
-                        <label className="fw-bold">Foto Recebida (opcional)</label>
+                        <label>Observação</label>
+                        <textarea
+                          className="form-control"
+                          value={formEdit.observacao || ""}
+                          onChange={(e) => setFormEdit({ ...formEdit, observacao: e.target.value })}
+                          rows="3"
+                        ></textarea>
+                      </div>
+
+                      {/* Foto Recebida */}
+                      <div className="col-md-12 mb-3">
+                        <label className="fw-bold">Foto Recebida</label>
                         <input
                           type="file"
                           className="form-control mb-2"
-                          onChange={(e) =>
-                            setFormEdit({
-                              ...formEdit,
-                              foto_encomenda_recebida: e.target.files[0],
-                            })
-                          }
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            setFormEdit({ ...formEdit, foto_encomenda_recebida: file });
+                            setPreviewRecebidaEdit(URL.createObjectURL(file));
+                          }}
                         />
                         <CameraCapture
-                          onCapture={(file) =>
-                            setFormEdit({
-                              ...formEdit,
-                              foto_encomenda_recebida: file,
-                            })
-                          }
+                          onCapture={(file) => {
+                            setFormEdit({ ...formEdit, foto_encomenda_recebida: file });
+                            setPreviewRecebidaEdit(URL.createObjectURL(file));
+                          }}
                         />
+                        {previewRecebidaEdit && (
+                          <div className="position-relative d-inline-block">
+                            <img
+                              src={previewRecebidaEdit}
+                              alt="Pré-visualização"
+                              className="img-thumbnail mt-2"
+                              style={{ width: "120px", cursor: "pointer" }}
+                              onClick={() => setImagemModal(previewRecebidaEdit)}
+                            />
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-danger position-absolute top-0 end-0"
+                              onClick={() => {
+                                setFormEdit({
+                                  ...formEdit,
+                                  foto_encomenda_recebida: null,
+                                  remove_foto_encomenda_recebida: true,
+                                });
+                                setPreviewRecebidaEdit(null);
+                              }}
+                            >
+                              ❌
+                            </button>
+                          </div>
+                        )}
                       </div>
+
+                      {/* Foto Entregue só se status = ENTREGUE */}
+                      {formEdit.status === "ENTREGUE" && (
+                        <div className="col-md-12 mb-3">
+                          <label className="fw-bold">Foto Entregue (obrigatória)</label>
+                          <input
+                            type="file"
+                            className="form-control mb-2"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              setFormEdit({ ...formEdit, foto_encomenda_entregue: file });
+                              setPreviewEntregueEdit(URL.createObjectURL(file));
+                            }}
+                          />
+                          <CameraCapture
+                            onCapture={(file) => {
+                              setFormEdit({ ...formEdit, foto_encomenda_entregue: file });
+                              setPreviewEntregueEdit(URL.createObjectURL(file));
+                            }}
+                          />
+                          {previewEntregueEdit && (
+                            <div className="position-relative d-inline-block">
+                              <img
+                                src={previewEntregueEdit}
+                                alt="Pré-visualização"
+                                className="img-thumbnail mt-2"
+                                style={{ width: "120px", cursor: "pointer" }}
+                                onClick={() => setImagemModal(previewEntregueEdit)}
+                              />
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-danger position-absolute top-0 end-0"
+                                onClick={() => {
+                                  setFormEdit({
+                                    ...formEdit,
+                                    foto_encomenda_entregue: null,
+                                    remove_foto_encomenda_entregue: true,
+                                  });
+                                  setPreviewEntregueEdit(null);
+                                }}
+                              >
+                                ❌
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -395,7 +543,20 @@ function EncomendasPage() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          </div>
+        )}
 
+        {/* Modal de imagem ampliada */}
+        {imagemModal && (
+          <div className="modal d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.7)" }}>
+            <div className="modal-dialog modal-dialog-centered modal-lg">
+              <div className="modal-content bg-transparent border-0 text-center">
+                <img src={imagemModal} alt="Visualização" className="img-fluid rounded" />
+                <button className="btn btn-light mt-3" onClick={() => setImagemModal(null)}>
+                  Fechar
+                </button>
               </div>
             </div>
           </div>
