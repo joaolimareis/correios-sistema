@@ -32,16 +32,15 @@ function App() {
           }
         />
 
-        {/* Encomendas → Admin e Secretaria */}
+                {/* Encomendas → Admin, Secretaria e Funcionário */}
         <Route
           path="/encomendas"
           element={
-            <PrivateRoute roles={["ADMINISTRADOR", "SECRETARIA"]}>
+            <PrivateRoute roles={["ADMINISTRADOR", "SECRETARIA", "FUNCIONARIO"]}>
               <EncomendasPage />
             </PrivateRoute>
           }
         />
-
         {/* Rota inválida */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

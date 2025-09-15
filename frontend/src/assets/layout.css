@@ -72,9 +72,7 @@
   color: #333; /* Texto escuro para contraste */
 }
 
-/* ============================= */
-/* Logout sempre embaixo          */
-/* ============================= */
+
 /* Logout sempre embaixo */
 .logout-section {
   padding: 0; /* zera padding externo */
@@ -99,6 +97,7 @@
 .logout-section .nav-link:hover {
   background: #dc3545; /* Vermelho forte */
   color: #fff;
+  border-radius: 10px;
 }
 
 

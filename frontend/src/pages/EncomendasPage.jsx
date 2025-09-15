@@ -90,7 +90,7 @@ function EncomendasPage() {
         <div className="encomendas-header d-flex justify-content-between align-items-center mb-3">
           <h2>📦 Gestão de Encomendas</h2>
           <button className="btn btn-success" onClick={() => setShowCadastro(true)}>
-            ➕ Cadastrar Encomenda
+            Cadastrar Encomenda
           </button>
         </div>
 

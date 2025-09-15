@@ -1,6 +1,6 @@
 import { useState } from "react";
 import api from "../api/axios";
-import "../assets/LoginPage.css"; 
+import "../assets/LoginPage.css"; // importa o css
 
 function LoginPage() {
   const [username, setUsername] = useState("");
@@ -10,17 +10,27 @@ function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // autenticação → tokens
+      // 1. Autenticar e pegar tokens em /api/token/
       const res = await api.post("/token/", { username, password });
-      localStorage.setItem("access", res.data.access);
-      localStorage.setItem("refresh", res.data.refresh);
+      const access = res.data.access;
+      const refresh = res.data.refresh;
 
-      // busca perfil do usuário logado
-      const me = await api.get("/encomendas/me/");
-      localStorage.setItem("user", JSON.stringify(me.data));
+      localStorage.setItem("access", access);
+      localStorage.setItem("refresh", refresh);
 
+      // 2. Buscar informações do usuário logado em /api/encomendas/me/
+      const userRes = await api.get("/encomendas/me/", {
+        headers: {
+          Authorization: `Bearer ${access}`,
+        },
+      });
+
+      localStorage.setItem("user", JSON.stringify(userRes.data));
+
+      // 3. Redirecionar para home
       window.location.href = "/";
     } catch (err) {
+      console.error("Erro no login:", err.response?.data || err.message);
       setError("Usuário ou senha inválidos");
     }
   };
@@ -42,11 +52,11 @@ function LoginPage() {
 
           <form onSubmit={handleLogin}>
             <div className="form-group mb-3">
-              <label>Email</label>
+              <label>Usuário</label>
               <input
                 type="text"
                 className="form-control"
-                placeholder="Digite seu email"
+                placeholder="Digite seu usuário"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
