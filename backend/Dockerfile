@@ -1,29 +1,39 @@
-# Imagem base com Python
 FROM python:3.11-slim
 
-# Configura diretório de trabalho
-WORKDIR /app
-
 # Variáveis de ambiente
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# Instalar dependências do sistema (ex: psycopg2, Pillow, etc.)
+# Instalar dependências do sistema
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpq-dev \
+    gnupg \
+    curl \
+    apt-transport-https \
+    unixodbc \
+    unixodbc-dev \
     gcc \
+    g++ \
+    make \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar requirements.txt e instalar dependências
-COPY requirements.txt /app/
+
+
+# Instalar driver oficial da Microsoft (SQL Server ODBC Driver)
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg \
+    && mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg \
+    && curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update \
+    && ACCEPT_EULA=Y apt-get install -y msodbcsql17 mssql-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Copiar dependências e instalar
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar todo o código do backend
-COPY . /app/
+# Copiar código
+COPY . .
 
-# Expõe a porta
 EXPOSE 8000
-
-# Rodar servidor
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

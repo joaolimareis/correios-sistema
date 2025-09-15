@@ -70,20 +70,21 @@ WSGI_APPLICATION = 'correios.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-from decouple import config
-
-SECRET_KEY = config("SECRET_KEY")
-DEBUG = config("DEBUG", default=False, cast=bool)
-
 DATABASES = {
     "default": {
-        "ENGINE": "mssql",
-        "NAME": config("DB_NAME"),
-        "USER": config("DB_USER"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST"),
-        "PORT": config("DB_PORT"),
-        "OPTIONS": {"driver": "ODBC Driver 17 for SQL Server"},
+        "ENGINE": "django.db.backends.sqlite3"
+        if config("DB_ENGINE") == "sqlite3"
+        else "mssql",
+        "NAME": BASE_DIR / config("DB_NAME")
+        if config("DB_ENGINE") == "sqlite3"
+        else config("DB_NAME"),
+        "USER": config("DB_USER", default=""),
+        "PASSWORD": config("DB_PASSWORD", default=""),
+        "HOST": config("DB_HOST", default=""),
+        "PORT": config("DB_PORT", default=""),
+        "OPTIONS": {"driver": "ODBC Driver 17 for SQL Server"}
+        if config("DB_ENGINE") != "sqlite3"
+        else {},
     }
 }
 
