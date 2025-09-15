@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+
+# Django
+/media/
+staticfiles/
+
+# Node / React
+node_modules/
+dist/
+build/
+
+# Env files
+*.env
+
+# Docker
+*.log
+*.pid
+*.sock
+
+# IDEs
+.vscode/
+.idea/
+*.swp

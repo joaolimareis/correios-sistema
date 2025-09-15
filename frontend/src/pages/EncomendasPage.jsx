@@ -105,6 +105,8 @@ function EncomendasPage() {
                   <th>Código</th>
                   <th>Status</th>
                   <th>Observação</th>
+                  <th>Cadastrado por</th>
+                  <th>Entregue por</th>
                   <th>Foto Recebida</th>
                   <th>Foto Entregue</th>
                   <th>Ações</th>
@@ -117,6 +119,8 @@ function EncomendasPage() {
                     <td>{e.codigo}</td>
                     <td>{e.status}</td>
                     <td>{e.observacao || "-"}</td>
+                    <td>{e.cadastrado_por_username || "-"}</td>
+                    <td>{e.entregue_por_username || "-"}</td>
                     <td>
                       {e.foto_encomenda_recebida && (
                         <img
@@ -179,30 +183,62 @@ function EncomendasPage() {
           </div>
         </div>
 
-        {/* Modal de cadastro */}
-        {showCadastro && (
+        {/* Modal de edição */}
+        {editando && (
           <div className="modal d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.5)" }}>
             <div className="modal-dialog modal-lg">
               <div className="modal-content">
-                <div className="modal-header bg-success text-white">
-                  <h5 className="modal-title">Cadastrar Encomenda</h5>
+                <div className="modal-header bg-warning text-dark">
+                  <h5 className="modal-title">Editar Encomenda</h5>
                   <button
                     type="button"
-                    className="btn-close btn-close-white"
+                    className="btn-close"
                     aria-label="Close"
-                    onClick={() => setShowCadastro(false)}
+                    onClick={() => setEditando(null)}
                   ></button>
                 </div>
-                <form onSubmit={handleSubmit}>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    try {
+                      const formData = new FormData();
+                      formData.append("nome_destinatario", formEdit.nome_destinatario);
+                      formData.append("codigo", formEdit.codigo);
+                      formData.append("status", formEdit.status);
+                      formData.append("observacao", formEdit.observacao || "");
+
+                      if (formEdit.foto_encomenda_recebida instanceof File) {
+                        formData.append("foto_encomenda_recebida", formEdit.foto_encomenda_recebida);
+                      }
+                      if (formEdit.foto_encomenda_entregue instanceof File) {
+                        formData.append("foto_encomenda_entregue", formEdit.foto_encomenda_entregue);
+                      }
+
+                      await api.put(`/encomendas/editar/${editando}/`, formData, {
+                        headers: {
+                          Authorization: `Bearer ${localStorage.getItem("access")}`,
+                          "Content-Type": "multipart/form-data",
+                        },
+                      });
+
+                      toast.success("Encomenda atualizada!");
+                      setEditando(null);
+                      carregarEncomendas();
+                    } catch (err) {
+                      console.error("Erro ao editar:", err.response?.data);
+                      toast.error("Erro ao editar encomenda!");
+                    }
+                  }}
+                >
                   <div className="modal-body">
                     <div className="row">
                       <div className="col-md-6 mb-3">
                         <label>Destinatário</label>
                         <input
                           className="form-control"
-                          value={form.nome_destinatario}
+                          value={formEdit.nome_destinatario || ""}
                           onChange={(e) =>
-                            setForm({ ...form, nome_destinatario: e.target.value })
+                            setFormEdit({ ...formEdit, nome_destinatario: e.target.value })
                           }
                           required
                         />
@@ -211,58 +247,59 @@ function EncomendasPage() {
                         <label>Código</label>
                         <input
                           className="form-control"
-                          value={form.codigo}
-                          onChange={(e) => setForm({ ...form, codigo: e.target.value })}
+                          value={formEdit.codigo || ""}
+                          onChange={(e) => setFormEdit({ ...formEdit, codigo: e.target.value })}
                           required
                         />
+                      </div>
+                      <div className="col-md-6 mb-3">
+                        <label>Status</label>
+                        <select
+                          className="form-select"
+                          value={formEdit.status || ""}
+                          onChange={(e) => setFormEdit({ ...formEdit, status: e.target.value })}
+                          required
+                        >
+                          <option value="">Selecione...</option>
+                          <option value="RECEBIDO">📦 Recebido</option>
+                          <option value="ENTREGUE">✅ Entregue</option>
+                        </select>
                       </div>
                       <div className="col-md-12 mb-3">
                         <label>Observação</label>
                         <textarea
                           className="form-control"
-                          value={form.observacao || ""}
-                          onChange={(e) => setForm({ ...form, observacao: e.target.value })}
+                          value={formEdit.observacao || ""}
+                          onChange={(e) => setFormEdit({ ...formEdit, observacao: e.target.value })}
                           rows="3"
                         ></textarea>
                       </div>
-                      <div className="col-md-12 mb-3">
-                        <label className="fw-bold">Foto Recebida</label>
+                      <div className="col-md-6 mb-3">
+                        <label>Cadastrado por</label>
                         <input
-                          type="file"
-                          className="form-control mb-2"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files[0];
-                            setForm({ ...form, foto_encomenda_recebida: file });
-                            setPreviewRecebidaCadastro(URL.createObjectURL(file));
-                          }}
+                          className="form-control"
+                          value={formEdit.cadastrado_por_username || "-"}
+                          disabled
                         />
-                        <CameraCapture
-                          onCapture={(file) => {
-                            setForm({ ...form, foto_encomenda_recebida: file });
-                            setPreviewRecebidaCadastro(URL.createObjectURL(file));
-                          }}
+                      </div>
+                      <div className="col-md-6 mb-3">
+                        <label>Entregue por</label>
+                        <input
+                          className="form-control"
+                          value={formEdit.entregue_por_username || "-"}
+                          disabled
                         />
-                        {previewRecebidaCadastro && (
-                          <img
-                            src={previewRecebidaCadastro}
-                            alt="Pré-visualização"
-                            className="img-thumbnail mt-2"
-                            style={{ width: "120px", cursor: "pointer" }}
-                            onClick={() => setImagemModal(previewRecebidaCadastro)}
-                          />
-                        )}
                       </div>
                     </div>
                   </div>
                   <div className="modal-footer">
-                    <button type="submit" className="btn btn-success">
-                      Salvar
+                    <button type="submit" className="btn btn-warning">
+                      Salvar Alterações
                     </button>
                     <button
                       type="button"
                       className="btn btn-secondary"
-                      onClick={() => setShowCadastro(false)}
+                      onClick={() => setEditando(null)}
                     >
                       Cancelar
                     </button>
@@ -298,251 +335,6 @@ function EncomendasPage() {
                     Cancelar
                   </button>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modal de edição */}
-        {editando && (
-          <div className="modal d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.5)" }}>
-            <div className="modal-dialog modal-lg">
-              <div className="modal-content">
-                <div className="modal-header bg-warning text-dark">
-                  <h5 className="modal-title">Editar Encomenda</h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    aria-label="Close"
-                    onClick={() => setEditando(null)}
-                  ></button>
-                </div>
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-
-                    if (
-                      formEdit.status === "RECEBIDO" &&
-                      !formEdit.foto_encomenda_recebida &&
-                      !formEdit.remove_foto_encomenda_recebida
-                    ) {
-                      toast.warning("⚠️ Para salvar como RECEBIDO é necessário enviar a foto de recebimento!");
-                      return;
-                    }
-
-                    if (
-                      formEdit.status === "ENTREGUE" &&
-                      !formEdit.foto_encomenda_entregue &&
-                      !formEdit.remove_foto_encomenda_entregue
-                    ) {
-                      toast.warning("⚠️ Para salvar como ENTREGUE é necessário enviar a foto de entrega!");
-                      return;
-                    }
-
-                    try {
-                      const formData = new FormData();
-                      formData.append("nome_destinatario", formEdit.nome_destinatario);
-                      formData.append("codigo", formEdit.codigo);
-                      formData.append("status", formEdit.status);
-                      formData.append("observacao", formEdit.observacao || "");
-
-                      if (formEdit.foto_encomenda_recebida instanceof File) {
-                        formData.append(
-                          "foto_encomenda_recebida",
-                          formEdit.foto_encomenda_recebida
-                        );
-                      }
-                      if (formEdit.foto_encomenda_entregue instanceof File) {
-                        formData.append(
-                          "foto_encomenda_entregue",
-                          formEdit.foto_encomenda_entregue
-                        );
-                      }
-
-                      if (formEdit.remove_foto_encomenda_recebida) {
-                        formData.append("remove_foto_encomenda_recebida", "true");
-                      }
-                      if (formEdit.remove_foto_encomenda_entregue) {
-                        formData.append("remove_foto_encomenda_entregue", "true");
-                      }
-
-                      await api.put(`/encomendas/editar/${editando}/`, formData, {
-                        headers: {
-                          Authorization: `Bearer ${localStorage.getItem("access")}`,
-                          "Content-Type": "multipart/form-data",
-                        },
-                      });
-
-                      toast.success("Encomenda atualizada!");
-                      setEditando(null);
-                      carregarEncomendas();
-                    } catch (err) {
-                      console.error("Erro ao editar:", err.response?.data);
-                      if (err.response?.data?.erro) {
-                        toast.warning(err.response.data.erro);
-                      } else {
-                        toast.error("Erro ao editar encomenda!");
-                      }
-                    }
-                  }}
-                >
-                  <div className="modal-body">
-                    <div className="row">
-                      <div className="col-md-6 mb-3">
-                        <label>Destinatário</label>
-                        <input
-                          className="form-control"
-                          value={formEdit.nome_destinatario || ""}
-                          onChange={(e) =>
-                            setFormEdit({ ...formEdit, nome_destinatario: e.target.value })
-                          }
-                          required
-                        />
-                      </div>
-
-                      <div className="col-md-6 mb-3">
-                        <label>Código</label>
-                        <input
-                          className="form-control"
-                          value={formEdit.codigo || ""}
-                          onChange={(e) =>
-                            setFormEdit({ ...formEdit, codigo: e.target.value })
-                          }
-                          required
-                        />
-                      </div>
-
-                      <div className="col-md-6 mb-3">
-                        <label>Status</label>
-                        <select
-                          className="form-select"
-                          value={formEdit.status || ""}
-                          onChange={(e) => setFormEdit({ ...formEdit, status: e.target.value })}
-                          required
-                        >
-                          <option value="">Selecione...</option>
-                          <option value="RECEBIDO">📦 Recebido</option>
-                          <option value="ENTREGUE">✅ Entregue</option>
-                        </select>
-                      </div>
-
-                      <div className="col-md-12 mb-3">
-                        <label>Observação</label>
-                        <textarea
-                          className="form-control"
-                          value={formEdit.observacao || ""}
-                          onChange={(e) => setFormEdit({ ...formEdit, observacao: e.target.value })}
-                          rows="3"
-                        ></textarea>
-                      </div>
-
-                      {/* Foto Recebida */}
-                      <div className="col-md-12 mb-3">
-                        <label className="fw-bold">Foto Recebida</label>
-                        <input
-                          type="file"
-                          className="form-control mb-2"
-                          onChange={(e) => {
-                            const file = e.target.files[0];
-                            setFormEdit({ ...formEdit, foto_encomenda_recebida: file });
-                            setPreviewRecebidaEdit(URL.createObjectURL(file));
-                          }}
-                        />
-                        <CameraCapture
-                          onCapture={(file) => {
-                            setFormEdit({ ...formEdit, foto_encomenda_recebida: file });
-                            setPreviewRecebidaEdit(URL.createObjectURL(file));
-                          }}
-                        />
-                        {previewRecebidaEdit && (
-                          <div className="position-relative d-inline-block">
-                            <img
-                              src={previewRecebidaEdit}
-                              alt="Pré-visualização"
-                              className="img-thumbnail mt-2"
-                              style={{ width: "120px", cursor: "pointer" }}
-                              onClick={() => setImagemModal(previewRecebidaEdit)}
-                            />
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-danger position-absolute top-0 end-0"
-                              onClick={() => {
-                                setFormEdit({
-                                  ...formEdit,
-                                  foto_encomenda_recebida: null,
-                                  remove_foto_encomenda_recebida: true,
-                                });
-                                setPreviewRecebidaEdit(null);
-                              }}
-                            >
-                              ❌
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Foto Entregue só se status = ENTREGUE */}
-                      {formEdit.status === "ENTREGUE" && (
-                        <div className="col-md-12 mb-3">
-                          <label className="fw-bold">Foto Entregue (obrigatória)</label>
-                          <input
-                            type="file"
-                            className="form-control mb-2"
-                            onChange={(e) => {
-                              const file = e.target.files[0];
-                              setFormEdit({ ...formEdit, foto_encomenda_entregue: file });
-                              setPreviewEntregueEdit(URL.createObjectURL(file));
-                            }}
-                          />
-                          <CameraCapture
-                            onCapture={(file) => {
-                              setFormEdit({ ...formEdit, foto_encomenda_entregue: file });
-                              setPreviewEntregueEdit(URL.createObjectURL(file));
-                            }}
-                          />
-                          {previewEntregueEdit && (
-                            <div className="position-relative d-inline-block">
-                              <img
-                                src={previewEntregueEdit}
-                                alt="Pré-visualização"
-                                className="img-thumbnail mt-2"
-                                style={{ width: "120px", cursor: "pointer" }}
-                                onClick={() => setImagemModal(previewEntregueEdit)}
-                              />
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-danger position-absolute top-0 end-0"
-                                onClick={() => {
-                                  setFormEdit({
-                                    ...formEdit,
-                                    foto_encomenda_entregue: null,
-                                    remove_foto_encomenda_entregue: true,
-                                  });
-                                  setPreviewEntregueEdit(null);
-                                }}
-                              >
-                                ❌
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="modal-footer">
-                    <button type="submit" className="btn btn-warning">
-                      Salvar Alterações
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => setEditando(null)}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </form>
               </div>
             </div>
           </div>
