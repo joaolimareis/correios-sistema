@@ -1,20 +1,21 @@
 import { useState, useRef } from "react";
 import api from "../api/axios";
 import FiltroEncomenda from "./FiltroEncomenda";
-import { toast } from "react-toastify"; // 🔔
+import { toast } from "react-toastify";
 
 function BuscarEncomenda() {
   const [busca, setBusca] = useState("");
   const [resultados, setResultados] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fotoCapturada, setFotoCapturada] = useState({});
-  const [expandirEntrega, setExpandirEntrega] = useState({}); // controla expansão por encomenda
+  const [previewFoto, setPreviewFoto] = useState({});
+  const [expandirEntrega, setExpandirEntrega] = useState({});
 
   const videoRef = useRef({});
   const canvasRef = useRef({});
   const streamRef = useRef({});
 
-  // 🔎 Busca
+  // 🔎 Buscar encomendas
   const handleSearch = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -56,7 +57,7 @@ function BuscarEncomenda() {
     toast.info("❌ Câmera fechada.");
   };
 
-  // 📷 Capturar foto
+  // 📸 Capturar foto
   const capturePhoto = (id) => {
     const video = videoRef.current[id];
     const canvas = canvasRef.current[id];
@@ -72,21 +73,21 @@ function BuscarEncomenda() {
 
     canvas.toBlob((blob) => {
       if (blob) {
-        setFotoCapturada((prev) => ({ ...prev, [id]: blob }));
-        toast.success("✅ Foto capturada! Agora clique em 'Marcar como Entregue'.");
+        const file = new File([blob], `entrega_${id}.jpg`, { type: "image/jpeg" });
+        setFotoCapturada((prev) => ({ ...prev, [id]: file }));
+        setPreviewFoto((prev) => ({ ...prev, [id]: URL.createObjectURL(blob) }));
+        toast.success("✅ Foto capturada!");
       }
     }, "image/jpeg");
   };
 
   // 📦 Marcar como entregue
   const deliverPackage = async (id) => {
-    const blob = fotoCapturada[id];
-    if (!blob) {
+    const file = fotoCapturada[id];
+    if (!file) {
       toast.warning("⚠️ É necessário capturar ou anexar uma foto antes de entregar!");
       return;
     }
-
-    const file = new File([blob], `entrega_${id}.jpg`, { type: "image/jpeg" });
 
     const formData = new FormData();
     formData.append("foto_encomenda_entregue", file);
@@ -95,8 +96,9 @@ function BuscarEncomenda() {
       await api.put(`/encomendas/entregar/${id}/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      toast.success("📦 Encomenda entregue com sucesso!");
+      toast.success("📦 Encomenda entregue!");
       setFotoCapturada((prev) => ({ ...prev, [id]: null }));
+      setPreviewFoto((prev) => ({ ...prev, [id]: null }));
       handleSearch(new Event("submit"));
     } catch {
       toast.error("❌ Erro ao salvar entrega!");
@@ -107,7 +109,8 @@ function BuscarEncomenda() {
   const handleFileSelect = (id, file) => {
     if (!file) return;
     setFotoCapturada((prev) => ({ ...prev, [id]: file }));
-    toast.success("✅ Arquivo anexado! Agora clique em 'Marcar como Entregue'.");
+    setPreviewFoto((prev) => ({ ...prev, [id]: URL.createObjectURL(file) }));
+    toast.success("✅ Arquivo anexado!");
   };
 
   return (
@@ -147,9 +150,7 @@ function BuscarEncomenda() {
           <div key={e.id} className="col-md-6 col-lg-4 mb-4">
             <div className="card shadow border-0 h-100">
               <div className="card-body">
-                <h5 className="card-title fw-bold text-dark">
-                  {e.nome_destinatario}
-                </h5>
+                <h5 className="card-title fw-bold">{e.nome_destinatario}</h5>
                 <p className="small mb-1"><strong>Código:</strong> {e.codigo}</p>
                 <p>
                   <span
@@ -163,26 +164,6 @@ function BuscarEncomenda() {
                   >
                     {e.status}
                   </span>
-                </p>
-
-                {/* Data de chegada */}
-                <p className="small mb-1">
-                  <strong>Data de Chegada:</strong>{" "}
-                  {new Date(e.data_chegada).toLocaleString("pt-BR")}{" "}
-                  {!e.foto_encomenda_recebida && (
-                    <span className="text-danger">(⚠️ foto removida)</span>
-                  )}
-                </p>
-
-                {/* Data de retirada */}
-                <p className="small mb-3">
-                  <strong>Data de Retirada:</strong>{" "}
-                  {e.data_retirada
-                    ? new Date(e.data_retirada).toLocaleString("pt-BR")
-                    : "Ainda não retirada"}{" "}
-                  {e.data_retirada && !e.foto_encomenda_entregue && (
-                    <span className="text-danger">(⚠️ foto removida)</span>
-                  )}
                 </p>
 
                 {/* Foto recebida */}
@@ -211,7 +192,7 @@ function BuscarEncomenda() {
                   </div>
                 )}
 
-                {/* Confirmar entrega - bloco recolhido/expandido */}
+                {/* Confirmar entrega */}
                 {e.status !== "ENTREGUE" && (
                   <div className="mt-3">
                     {!expandirEntrega[e.id] ? (
@@ -226,9 +207,20 @@ function BuscarEncomenda() {
                     ) : (
                       <>
                         <div className="card p-2 border bg-light">
-                          <label className="form-label small fw-bold">
-                            Confirmar entrega:
-                          </label>
+                          <label className="form-label small fw-bold">Confirmar entrega:</label>
+
+                          {/* Preview foto capturada */}
+                          {previewFoto[e.id] && (
+                            <div className="text-center mb-2">
+                              <img
+                                src={previewFoto[e.id]}
+                                alt="Prévia"
+                                className="img-fluid rounded border"
+                                style={{ maxHeight: "150px" }}
+                              />
+                              <p className="small text-muted">📷 Prévia da foto</p>
+                            </div>
+                          )}
 
                           <div className="mb-2 text-center">
                             <video
@@ -259,7 +251,6 @@ function BuscarEncomenda() {
                             >
                               ❌ Fechar Câmera
                             </button>
-
                             <label className="btn btn-outline-dark">
                               📂 Anexar Arquivo
                               <input
@@ -271,7 +262,6 @@ function BuscarEncomenda() {
                                 }
                               />
                             </label>
-
                             <button
                               className="btn btn-warning"
                               type="button"
@@ -279,7 +269,6 @@ function BuscarEncomenda() {
                             >
                               📸 Capturar Foto
                             </button>
-
                             <button
                               className="btn btn-success"
                               type="button"

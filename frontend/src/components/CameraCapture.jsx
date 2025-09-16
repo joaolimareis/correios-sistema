@@ -7,14 +7,12 @@ function CameraCapture({ onCapture }) {
   const [stream, setStream] = useState(null);
   const [captured, setCaptured] = useState(null);
 
-  // sempre que o estado "stream" mudar, ligar no vídeo
   useEffect(() => {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
   }, [stream]);
 
-  // 🎥 Abrir câmera
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -26,7 +24,6 @@ function CameraCapture({ onCapture }) {
     }
   };
 
-  // ❌ Fechar câmera
   const stopCamera = () => {
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
@@ -35,7 +32,6 @@ function CameraCapture({ onCapture }) {
     toast.info("❌ Câmera fechada");
   };
 
-  // 📸 Capturar foto
   const capturePhoto = () => {
     if (!videoRef.current) {
       toast.warning("⚠️ Abra a câmera antes de capturar!");
@@ -53,7 +49,7 @@ function CameraCapture({ onCapture }) {
     canvas.toBlob((blob) => {
       if (blob) {
         const file = new File([blob], "foto_entrega.jpg", { type: "image/jpeg" });
-        setCaptured(URL.createObjectURL(blob)); // mostra prévia
+        setCaptured(URL.createObjectURL(blob));
         onCapture(file);
         toast.success("✅ Foto capturada!");
       }
@@ -94,7 +90,7 @@ function CameraCapture({ onCapture }) {
         <div className="text-center mt-2">
           <img
             src={captured}
-            alt="Prévia da captura"
+            alt="Prévia"
             className="img-fluid rounded border"
             style={{ maxHeight: "150px" }}
           />

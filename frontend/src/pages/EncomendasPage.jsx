@@ -3,7 +3,6 @@ import api from "../api/axios";
 import Layout from "../components/Layout";
 import { toast } from "react-toastify";
 import "../assets/encomendas.css";
-import CameraCapture from "../components/CameraCapture.jsx";
 
 function EncomendasPage() {
   const [encomendas, setEncomendas] = useState([]);
@@ -23,7 +22,6 @@ function EncomendasPage() {
   const [showCadastro, setShowCadastro] = useState(false);
   const [excluindo, setExcluindo] = useState(null);
 
-  // Modal global de imagens
   const [imagemModal, setImagemModal] = useState(null);
 
   // 🔄 Carregar encomendas
@@ -68,6 +66,39 @@ function EncomendasPage() {
     } catch (err) {
       console.error("Erro:", err.response?.data);
       toast.error("Erro ao cadastrar encomenda!");
+    }
+  };
+
+  // 📝 Editar encomenda
+  const handleEdit = async (e) => {
+    e.preventDefault();
+    try {
+      const formData = new FormData();
+      formData.append("nome_destinatario", formEdit.nome_destinatario);
+      formData.append("codigo", formEdit.codigo);
+      formData.append("status", formEdit.status);
+      formData.append("observacao", formEdit.observacao || "");
+
+      if (formEdit.foto_encomenda_recebida instanceof File) {
+        formData.append("foto_encomenda_recebida", formEdit.foto_encomenda_recebida);
+      }
+      if (formEdit.foto_encomenda_entregue instanceof File) {
+        formData.append("foto_encomenda_entregue", formEdit.foto_encomenda_entregue);
+      }
+
+      await api.put(`/encomendas/editar/${editando}/`, formData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access")}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      toast.success("Encomenda atualizada!");
+      setEditando(null);
+      carregarEncomendas();
+    } catch (err) {
+      console.error("Erro ao editar:", err.response?.data);
+      toast.error("Erro ao editar encomenda!");
     }
   };
 
@@ -183,6 +214,92 @@ function EncomendasPage() {
           </div>
         </div>
 
+        {/* Modal de cadastro */}
+        {showCadastro && (
+          <div className="modal d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.5)" }}>
+            <div className="modal-dialog modal-lg">
+              <div className="modal-content">
+                <div className="modal-header bg-success text-white">
+                  <h5 className="modal-title">Cadastrar Encomenda</h5>
+                  <button
+                    type="button"
+                    className="btn-close btn-close-white"
+                    onClick={() => setShowCadastro(false)}
+                  ></button>
+                </div>
+                <form onSubmit={handleSubmit}>
+                  <div className="modal-body">
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <label>Destinatário</label>
+                        <input
+                          className="form-control"
+                          value={form.nome_destinatario}
+                          onChange={(e) =>
+                            setForm({ ...form, nome_destinatario: e.target.value })
+                          }
+                          required
+                        />
+                      </div>
+                      <div className="col-md-6 mb-3">
+                        <label>Código</label>
+                        <input
+                          className="form-control"
+                          value={form.codigo}
+                          onChange={(e) => setForm({ ...form, codigo: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="col-md-12 mb-3">
+                        <label>Observação</label>
+                        <textarea
+                          className="form-control"
+                          value={form.observacao}
+                          onChange={(e) => setForm({ ...form, observacao: e.target.value })}
+                        ></textarea>
+                      </div>
+                      <div className="col-md-12 mb-3">
+                        <label>Foto Recebida</label>
+                        <input
+                          type="file"
+                          className="form-control"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            setForm({ ...form, foto_encomenda_recebida: file });
+                            setPreviewRecebidaCadastro(URL.createObjectURL(file));
+                          }}
+                          required
+                        />
+                        {previewRecebidaCadastro && (
+                          <img
+                            src={previewRecebidaCadastro}
+                            alt="Preview"
+                            className="mt-2"
+                            width="120"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="submit" className="btn btn-success">
+                      Salvar
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setShowCadastro(false)}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Modal de edição */}
         {editando && (
           <div className="modal d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.5)" }}>
@@ -193,43 +310,10 @@ function EncomendasPage() {
                   <button
                     type="button"
                     className="btn-close"
-                    aria-label="Close"
                     onClick={() => setEditando(null)}
                   ></button>
                 </div>
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    try {
-                      const formData = new FormData();
-                      formData.append("nome_destinatario", formEdit.nome_destinatario);
-                      formData.append("codigo", formEdit.codigo);
-                      formData.append("status", formEdit.status);
-                      formData.append("observacao", formEdit.observacao || "");
-
-                      if (formEdit.foto_encomenda_recebida instanceof File) {
-                        formData.append("foto_encomenda_recebida", formEdit.foto_encomenda_recebida);
-                      }
-                      if (formEdit.foto_encomenda_entregue instanceof File) {
-                        formData.append("foto_encomenda_entregue", formEdit.foto_encomenda_entregue);
-                      }
-
-                      await api.put(`/encomendas/editar/${editando}/`, formData, {
-                        headers: {
-                          Authorization: `Bearer ${localStorage.getItem("access")}`,
-                          "Content-Type": "multipart/form-data",
-                        },
-                      });
-
-                      toast.success("Encomenda atualizada!");
-                      setEditando(null);
-                      carregarEncomendas();
-                    } catch (err) {
-                      console.error("Erro ao editar:", err.response?.data);
-                      toast.error("Erro ao editar encomenda!");
-                    }
-                  }}
-                >
+                <form onSubmit={handleEdit}>
                   <div className="modal-body">
                     <div className="row">
                       <div className="col-md-6 mb-3">
@@ -275,20 +359,36 @@ function EncomendasPage() {
                         ></textarea>
                       </div>
                       <div className="col-md-6 mb-3">
-                        <label>Cadastrado por</label>
+                        <label>Foto Recebida</label>
                         <input
+                          type="file"
                           className="form-control"
-                          value={formEdit.cadastrado_por_username || "-"}
-                          disabled
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            setFormEdit({ ...formEdit, foto_encomenda_recebida: file });
+                            setPreviewRecebidaEdit(URL.createObjectURL(file));
+                          }}
                         />
+                        {previewRecebidaEdit && (
+                          <img src={previewRecebidaEdit} alt="Preview Recebida" width="120" />
+                        )}
                       </div>
                       <div className="col-md-6 mb-3">
-                        <label>Entregue por</label>
+                        <label>Foto Entregue</label>
                         <input
+                          type="file"
                           className="form-control"
-                          value={formEdit.entregue_por_username || "-"}
-                          disabled
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            setFormEdit({ ...formEdit, foto_encomenda_entregue: file });
+                            setPreviewEntregueEdit(URL.createObjectURL(file));
+                          }}
                         />
+                        {previewEntregueEdit && (
+                          <img src={previewEntregueEdit} alt="Preview Entregue" width="120" />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -320,7 +420,6 @@ function EncomendasPage() {
                   <button
                     type="button"
                     className="btn-close btn-close-white"
-                    aria-label="Close"
                     onClick={() => setExcluindo(null)}
                   ></button>
                 </div>
