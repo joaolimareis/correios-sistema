@@ -9,6 +9,8 @@ function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError(""); // limpa erro anterior
+
     try {
       // 1. Autenticar e pegar tokens em /api/token/
       const res = await api.post("/token/", { username, password });
@@ -31,7 +33,14 @@ function LoginPage() {
       window.location.href = "/";
     } catch (err) {
       console.error("Erro no login:", err.response?.data || err.message);
-      setError("Usuário ou senha inválidos");
+      if (err.response?.status === 401) {
+        setError("❌ Usuário ou senha inválidos.");
+        setTimeout(() => setError(""), 4000); // some após 4 segundos
+      } else {
+        setError("⚠️ Erro no servidor. Tente novamente mais tarde.");
+        setTimeout(() => setError(""), 4000);
+      }
+
     }
   };
 
@@ -48,6 +57,7 @@ function LoginPage() {
             <p>Acesse sua conta</p>
           </div>
 
+          {/* Mostra erro */}
           {error && <div className="alert alert-danger">{error}</div>}
 
           <form onSubmit={handleLogin}>

@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   backend:
     build:
@@ -5,13 +7,13 @@ services:
     container_name: correios-backend
     command: >
       sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+             gunicorn backend.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - ./backend:/app
     env_file:
       - ./backend/.env
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     networks:
       - correios-net
 
@@ -19,16 +21,29 @@ services:
     build:
       context: ./frontend
     container_name: correios-frontend
-    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    command: ["npm", "run", "build"]
     volumes:
       - ./frontend:/app
-      - /app/node_modules
-    ports:
-      - "5173:5173"
-    stdin_open: true
-    tty: true
     networks:
       - correios-net
+
+  nginx:
+  image: nginx:latest
+  container_name: correios-nginx
+  volumes:
+    - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    - ./frontend/dist:/usr/share/nginx/html:ro
+    - ./nginx/certs/star_faama_edu_br.crt:/etc/ssl/certs/star_faama_edu_br.crt:ro
+    - ./nginx/certs/faama.edu.br.key:/etc/ssl/certs/faama.edu.br.key:ro
+  ports:
+    - "80:80"
+    - "443:443"
+  depends_on:
+    - backend
+    - frontend
+  networks:
+    - correios-net
+
 
 networks:
   correios-net:
